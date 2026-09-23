@@ -318,3 +318,5 @@ require (
 	modernc.org/token v1.0.1 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
 )
+
+replace github.com/casdoor/xorm-adapter/v3 => ./third_party/kanji-xorm-adapter
