@@ -24,10 +24,8 @@ import (
 	"github.com/casdoor/casdoor/authz"
 	"github.com/casdoor/casdoor/conf"
 	"github.com/casdoor/casdoor/controllers"
-	"github.com/casdoor/casdoor/ldap"
 	"github.com/casdoor/casdoor/object"
 	"github.com/casdoor/casdoor/proxy"
-	"github.com/casdoor/casdoor/radius"
 	"github.com/casdoor/casdoor/routers"
 	"github.com/casdoor/casdoor/service"
 	"github.com/casdoor/casdoor/util"
@@ -141,8 +139,6 @@ func main() {
 		panic(err)
 	}
 
-	go ldap.StartLdapServer()
-	go radius.StartRadiusServer()
 	go object.ClearThroughputPerSecond()
 
 	// Start webhook delivery worker
