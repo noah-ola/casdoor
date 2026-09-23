@@ -104,6 +104,9 @@ func ParseStandardJwtToken(token string, cert *Cert) (*ClaimsStandard, error) {
 		} else if _, ok := token.Method.(*jwt.SigningMethodECDSA); ok {
 			// ES certificate
 			certificate, err = jwt.ParseECPublicKeyFromPEM([]byte(cert.Certificate))
+		} else if _, ok := token.Method.(*jwt.SigningMethodEd25519); ok {
+			// EdDSA certificate
+			certificate, err = jwt.ParseEdPublicKeyFromPEM([]byte(cert.Certificate))
 		} else {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

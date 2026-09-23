@@ -73,6 +73,9 @@ func generateLogoutToken(application *Application, user *User, sessionId string,
 	if strings.Contains(signingMethod, "ES") {
 		token = jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 		key, err = jwt.ParseECPrivateKeyFromPEM([]byte(cert.PrivateKey))
+	} else if strings.Contains(signingMethod, "Ed") {
+		token = jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims)
+		key, err = jwt.ParseEdPrivateKeyFromPEM([]byte(cert.PrivateKey))
 	} else {
 		token = jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 		key, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(cert.PrivateKey))

@@ -15,6 +15,7 @@
 package object
 
 import (
+	"crypto/ed25519"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -220,19 +221,39 @@ func GetJsonWebKeySet(applicationName string) (jose.JSONWebKeySet, error) {
 			return jwks, fmt.Errorf("the certificate field should not be empty for the cert: %v", cert)
 		}
 
+		var jwk jose.JSONWebKey
+		jwk.KeyID = cert.Name
+		jwk.Use = "sig"
+
 		certPemBlock := []byte(cert.Certificate)
 		certDerBlock, _ := pem.Decode(certPemBlock)
+		if certDerBlock == nil {
+			return jwks, fmt.Errorf("failed to decode PEM certificate for cert: %s", cert.Name)
+		}
+
+		if cert.CryptoAlgorithm == "Ed25519" {
+			publicKey, err := x509.ParsePKIXPublicKey(certDerBlock.Bytes)
+			if err != nil {
+				return jwks, err
+			}
+			if _, ok := publicKey.(ed25519.PublicKey); !ok {
+				return jwks, fmt.Errorf("unexpected Ed25519 public key type for cert: %s", cert.Name)
+			}
+
+			jwk.Key = publicKey
+			jwk.Algorithm = "EdDSA"
+			jwks.Keys = append(jwks.Keys, jwk)
+			continue
+		}
+
 		x509Cert, err := x509.ParseCertificate(certDerBlock.Bytes)
 		if err != nil {
 			return jwks, err
 		}
 
-		var jwk jose.JSONWebKey
 		jwk.Key = x509Cert.PublicKey
 		jwk.Certificates = []*x509.Certificate{x509Cert}
-		jwk.KeyID = cert.Name
 		jwk.Algorithm = cert.CryptoAlgorithm
-		jwk.Use = "sig"
 		jwks.Keys = append(jwks.Keys, jwk)
 	}
 
