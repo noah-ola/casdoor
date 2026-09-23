@@ -163,13 +163,18 @@ func initBuiltInUser() {
 		return
 	}
 
+	adminPassword, ok := os.LookupEnv("CASDOOR_BUILTIN_ADMIN_PASSWORD")
+	if !ok || len(adminPassword) < 16 {
+		panic("CASDOOR_BUILTIN_ADMIN_PASSWORD must contain at least 16 characters when initializing a production database")
+	}
+
 	user = &User{
 		Owner:             "built-in",
 		Name:              "admin",
 		CreatedTime:       util.GetCurrentTime(),
 		Id:                util.GenerateId(),
 		Type:              "normal-user",
-		Password:          "123",
+		Password:          adminPassword,
 		DisplayName:       "Admin",
 		Avatar:            fmt.Sprintf("%s/img/casbin.svg", conf.GetConfigString("staticBaseUrl")),
 		Email:             "admin@example.com",
