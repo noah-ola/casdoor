@@ -51,35 +51,39 @@ func InitDeviceAuthStore() {
 
 	client, err := newRedisClient(endpoint)
 	if err != nil {
-		logs.Warn("device_auth_store: failed to connect to Redis (%s), falling back to in-memory store: %v", endpoint, err)
+		logs.Warn("device_auth_store: failed to connect to Redis, falling back to in-memory store: %v", err)
 		return
 	}
 
 	DeviceAuthMap = &redisDeviceAuthStore{client: client}
-	logs.Info("device_auth_store: using Redis backend at %s", endpoint)
+	logs.Info("device_auth_store: using Redis backend")
 }
 
-// newRedisClient parses the same "host:port[,db[,password]]" format that the beego session
-// Redis provider uses, so users do not need a separate configuration key.
+// newRedisClient parses the Beego session provider's legacy
+// "host:port[,poolsize[,password[,db]]]" format, also used by our startup config.
 func newRedisClient(endpoint string) (*redis.Client, error) {
-	addr := endpoint
+	parts := strings.Split(strings.TrimSpace(endpoint), ",")
+	poolSize := 100
 	db := 0
 	password := ""
 
-	if i := strings.Index(endpoint, ","); i >= 0 {
-		addr = endpoint[:i]
-		rest := endpoint[i+1:]
-		parts := strings.SplitN(rest, ",", 2)
-		if d, err := strconv.Atoi(strings.TrimSpace(parts[0])); err == nil {
-			db = d
+	if len(parts) > 1 {
+		if n, err := strconv.Atoi(parts[1]); err == nil && n >= 0 {
+			poolSize = n
 		}
-		if len(parts) > 1 {
-			password = strings.TrimSpace(parts[1])
+	}
+	if len(parts) > 2 {
+		password = parts[2]
+	}
+	if len(parts) > 3 {
+		if n, err := strconv.Atoi(parts[3]); err == nil && n >= 0 {
+			db = n
 		}
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
+		Addr:     parts[0],
+		PoolSize: poolSize,
 		DB:       db,
 		Password: password,
 	})
